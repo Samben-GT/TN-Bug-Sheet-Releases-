@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>try{var t=localStorage.getItem('tnb-theme')||'dark';if(t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>TN Bug Sheet</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bug Sheet">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="lib/leaflet/leaflet.css">
+<link rel="stylesheet" href="app.css?v=0.50">
+</head>
+<body>
+
+<!-- Sign in -->
+<div id="boot" class="boot on" role="status" aria-live="polite">
+  <div class="boot-in">
+    <img src="apple-touch-icon.png" alt="" class="boot-logo">
+    <div class="boot-name">TN Bug Sheet</div>
+    <div class="boot-ta">தமிழ்நாடு புகார் பதிவேடு</div>
+    <div class="boot-bar"><i></i></div>
+    <div class="boot-msg" id="bootMsg">Starting up...</div>
+  </div>
+</div>
+<section id="scrLogin" class="screen">
+  <div class="body login">
+    <div class="logo">TN Bug Sheet</div>
+    <p class="muted">Report civic problems on the street. Sign in with your email or mobile number and your password.</p>
+    <h3>Email or mobile number</h3>
+    <input id="inEmail" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="you@example.com or 98765 43210">
+    <h3>Password</h3>
+    <input id="inPass" type="password" autocomplete="current-password" placeholder="Password">
+    <button id="btnSignIn" class="cta static">Sign in</button>
+    <p class="muted small">Forgot it? Ask Sam to set a new one.</p>
+    <p id="loginErr" class="err"></p>
+    <button id="btnHaveInvite" class="cta static ghost">I have an invite</button>
+  </div>
+</section>
+
+<!-- Invite: step 2, get the app -->
+<section id="scrGetApp" class="screen">
+  <div class="body login join">
+    <div class="hero"><div class="hero-bug"></div><div><div class="logo">TN Bug Sheet</div><div class="hero-tag">Report it. Track it. Get it fixed.</div></div></div>
+    <div class="jsteps"><span class="done">1 Password</span><span class="on">2 Get the app</span><span>3 Report</span></div>
+    <div id="getAppBody"></div>
+    <button id="btnGetAppSkip" class="cta static ghost">Continue in the browser</button>
+  </div>
+</section>
+
+<!-- Invite: step 1, set your password -->
+<section id="scrJoin" class="screen">
+  <div class="body login join">
+    <div class="hero"><div class="hero-bug"></div><div><div class="logo">TN Bug Sheet</div><div class="hero-tag">Report it. Track it. Get it fixed.</div></div></div>
+    <div class="jsteps"><span class="on">1 Password</span><span>2 Get the app</span><span>3 Report</span></div>
+    <h2 class="join-h">You're invited <span class="ta">உங்களுக்கு அழைப்பு</span></h2>
+    <p class="muted">You're one of the first people in the TN Bug Sheet pilot. Choose a password to finish. You'll use it on the app and on the web.</p>
+    <div class="invite-card">
+      <label for="jEmail" class="ic-k">Invite for</label>
+      <input id="jEmail" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="you@example.com or 98765 43210">
+      <div id="jCodeRow">
+        <label for="jCode" class="ic-k">Invite code</label>
+        <input id="jCode" autocomplete="off" autocapitalize="characters" maxlength="12" placeholder="8 letters from your invite">
+      </div>
+      <div id="jCodeOk" class="ic-ok" hidden>&#10003; Invite code filled in from your link</div>
+    </div>
+    <h3>New password</h3>
+    <input id="jPass" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+    <div class="pw-meter"><i></i><i></i><i></i><i></i></div>
+    <div id="jStrength" class="small muted">Use 8 or more characters. A short sentence works well.</div>
+    <h3>Type it again</h3>
+    <input id="jPass2" type="password" autocomplete="new-password" placeholder="Same password">
+    <div id="jMatch" class="small muted"></div>
+    <button id="btnJoin" class="cta static">Set password and continue</button>
+    <p id="joinErr" class="err"></p>
+    <div class="jwhat">
+      <div><b>1</b><span>Snap a public problem: pothole, dark street, garbage, sagging wire.</span></div>
+      <div><b>2</b><span>We find the office responsible and get it to them.</span></div>
+      <div><b>3</b><span>You see where it is until it's fixed.</span></div>
+    </div>
+    <button id="btnJoinBack" class="cta static ghost">I already have a password</button>
+  </div>
+</section>
+
+<!-- Map screen -->
+<section id="scrMap" class="screen">
+  <div id="map"></div>
+  <header class="bar">
+    <div class="msearch"><span class="ms-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2C8 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3-7-7-7z" fill="#e8475f"/><circle cx="12" cy="9" r="2.6" fill="#fff"/></svg></span>
+      <input id="mapSearch" type="search" placeholder="Search here" autocomplete="off" enterkeyhint="search">
+      <button id="msClear" class="ms-x" aria-label="Clear" hidden>&#10005;</button>
+      <button id="btnMe" class="avatar" aria-label="Account and settings">S</button></div>
+  </header>
+  <div class="chiprow" id="chipRow">
+    <button id="btnHome" class="chip"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Home</button>
+    <button id="btnWho" class="chip"><svg viewBox="0 0 24 24" width="16" height="16"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 5.5a3 3 0 010 5.6M18 14.8c1.8.7 3 2.5 3 5.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Who's who</button>
+    <button id="btnList" class="chip" aria-label="My reports"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 3h9l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 12h7M9 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>My reports <span id="cnt">0</span></button>
+    <button id="btnWork" class="chip" hidden><svg viewBox="0 0 24 24" width="16" height="16"><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>My work <span id="wcnt">0</span></button>
+    <button id="btnAtlas" class="chip"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z M9 4v14 M15 6v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Atlas</button>
+    <button id="btnNewBug" class="chip"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>New bug</button>
+    <button id="btnVerify" class="chip"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Verify</button>
+    <button id="btnAdmin" class="chip" hidden><svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Admin</button>
+  </div>
+  <div id="msResults" class="ms-results" hidden></div>
+  <div id="gps" class="gps">Finding your location...</div>
+  <button id="btnLayers" class="fab layers" aria-label="Map type and details"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3l9 5-9 5-9-5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 12.5l9 5 9-5M3 16.5l9 5 9-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+  <button id="btnRecenter" class="fab small" aria-label="Back to my location"><svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+  <div id="layerSheet" class="lsheet" hidden><div class="ls-card" role="dialog" aria-label="Map type">
+    <div class="ls-head"><b>Map type</b><button id="lsClose" class="ms-x" aria-label="Close">&#10005;</button></div>
+    <div class="ls-types" id="lsTypes"></div>
+    <div class="ls-sep"></div>
+    <div class="ls-head"><b>Map details</b></div>
+    <div class="ls-types" id="lsDetails"></div>
+  </div></div>
+  <div class="hint" id="mapHint">Tap to go deeper · hold to drop a pin</div>
+  <div id="hereCard" class="here-card" hidden></div>
+  <button id="btnReport" class="cta">Report a bug <span style="font-weight:500;opacity:.9">· புகார் செய்</span></button>
+</section>
+
+<!-- Directory: all MLAs and ministers -->
+<!-- My work -->
+<section id="scrWork" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title" id="workTitle">My work</div>
+  </header>
+  <div class="body" id="work"></div>
+</section>
+
+<!-- MLA photo slots -->
+<section id="scrFaces" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title">Photo slots</div>
+  </header>
+  <div class="body" id="faces"></div>
+</section>
+
+<section id="scrVerify" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title">Verify</div>
+  </header>
+  <div class="tabs" id="vTabs"><button data-f="near" class="on">This area</button><button data-f="patch" hidden>My patch</button><button data-f="todo">To check</button><button data-f="disputed">Disputed</button><button data-f="all">All</button></div>
+  <div class="body">
+    <div id="vHead"></div>
+    <input id="vSearch" type="search" placeholder="Search office, department, area, number" autocomplete="off">
+    <div id="vList"></div>
+  </div>
+</section>
+
+<section id="scrDir" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title">Who's who</div>
+  </header>
+  <div class="tabs" id="dirTabs"><button data-t="mla" class="on">MLAs</button><button data-t="min">Ministers</button><button data-t="party">Parties</button><button data-t="off">Officers</button></div>
+  <div class="body">
+    <input id="dirSearch" type="search" placeholder="Search name, place, district, party, department" autocomplete="off">
+    <select id="dirDist" style="margin-top:10px"></select>
+    <div id="dirBody"></div>
+  </div>
+</section>
+
+<!-- One constituency -->
+<section id="scrAc" class="screen overlay psheet">
+  <div class="ps-grab"></div>
+  <button class="ps-x" data-back aria-label="Close">&#10005;</button>
+  <span id="acTitle" hidden></span>
+  <div class="body" id="acBody"></div>
+</section>
+
+<section id="scrHome" class="screen">
+  <header class="bar solid home-bar">
+    <div class="title">TN Bug Sheet</div>
+    <button id="homeMe" class="avatar sm" aria-label="Account and settings">S</button>
+  </header>
+  <div id="notices"></div>
+  <div class="body" id="homeBody"></div>
+</section>
+
+<section id="scrProfile" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title">My profile</div>
+  </header>
+  <div class="body" id="profBody"></div>
+</section>
+
+<section id="scrLaw" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title">Law library</div>
+  </header>
+  <div class="law-search"><input id="lawQ" placeholder="Search Acts: RTI, consumer, motor vehicles..." autocomplete="off"><label class="chk"><input type="checkbox" id="lawDeep"> Search inside the text</label></div>
+  <div class="body" id="lawBody"></div>
+</section>
+
+<section id="scrLawAct" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title" id="lawActTitle">Act</div>
+  </header>
+  <div class="body" id="lawActBody"></div>
+</section>
+
+<section id="scrAtlas" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title" style="margin-right:0">Atlas</div>
+    <button class="back" id="atLocate" aria-label="Go to my pin"><svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+  </header>
+  <div class="at-crumbs" id="atCrumbs"></div>
+  <div class="at-stage"><svg id="atMap" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <div class="at-sheet" id="atSheet"></div>
+</section>
+
+<section id="scrDist" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title" id="distTitle">District</div>
+  </header>
+  <div class="body" id="distBody"></div>
+</section>
+
+<!-- Report form -->
+<section id="scrForm" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title">New bug</div>
+  </header>
+  <div class="body">
+    <div id="filedIn" class="filed-in"></div>
+    <div id="wardRow" class="ward-row" hidden></div>
+    <h3>Where is it?</h3>
+    <div class="seg" id="locSeg"><button data-m="gps">Current location</button><button data-m="map">Drop a pin</button><button data-m="pin">PIN code</button></div>
+    <div id="locPin" hidden style="margin-top:8px">
+      <input id="inPin" inputmode="numeric" maxlength="6" placeholder="6-digit PIN code, e.g. 600044" autocomplete="postal-code">
+      <div id="pinRes"></div>
+      <details class="addr-more" id="locAddr"><summary>Or search a street or landmark</summary><input id="inAddr" placeholder="Street, area, landmark (e.g. Chromepet bus stand)" autocomplete="off"><div id="addrRes"></div></details>
+    </div>
+    <div id="where" class="where" style="margin-top:8px"></div>
+    <div id="pickMap" hidden><div id="pickMapEl"></div><div class="pick-cross"></div><p class="muted small" id="pickHint" style="margin:6px 0 0">Tap the exact spot, or move the map under the cross.</p><div class="row" style="margin-top:8px"><button class="cta static ghost" id="pickCancel" style="margin-top:0">Cancel</button><button class="cta static" id="pickOk" style="margin-top:0">Use this spot</button></div></div>
+
+    <h3>Tell us <span class="muted">(needed)</span></h3>
+    <textarea id="inNote" rows="3" maxlength="500" placeholder="In Tamil or English. For example: streetlight not working near the bus stop for a week"></textarea>
+    <div id="catGuess" class="cat-guess"></div>
+    <details id="catPick" class="cat-pick"><summary>Choose the type yourself</summary><div id="cats" class="cats"></div></details>
+    <div id="catNote" class="cat-note" hidden></div>
+    <label class="urgent-row"><input type="checkbox" id="inUrgent"><span><b>Urgent</b> · danger to someone's safety now, like a live wire, open manhole, flooding or an unsafe spot</span></label>
+    <div id="urgWhy" class="muted small"></div>
+
+    <h3>Show us <span class="muted">(optional)</span></h3>
+    <div id="photos" class="photos">
+      <label class="add">
+        <input id="inPhoto" type="file" accept="image/*" capture="environment" multiple hidden>
+        <span>+<br>Photo</span>
+      </label>
+    </div>
+    <div class="media-btns">
+      <label class="st-btn">Video<input id="inVideo" type="file" accept="video/*" capture="environment" hidden></label>
+      <button type="button" class="st-btn" id="btnVoice">Voice note</button>
+    </div>
+    <div id="mediaList" class="st-files"></div>
+    <p class="muted small">Keep faces and number plates out where you can. Videos up to a minute.</p>
+
+
+    <h3>Since when? <span class="muted">(optional)</span></h3>
+    <div class="seg" id="since">
+      <button data-v="today">Today</button><button data-v="week">This week</button><button data-v="month">This month</button><button data-v="longer">Longer</button>
+    </div>
+
+    <p id="formErr" class="err"></p>
+    <button id="btnSave" class="cta static">Save and send</button>
+  </div>
+</section>
+
+<!-- My reports -->
+<section id="scrList" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title">My reports</div>
+    <button id="btnSettings" class="chip">Settings</button>
+  </header>
+  <div class="body" id="list"></div>
+</section>
+
+<!-- One report -->
+<section id="scrOne" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title" id="oneTitle">Report</div>
+  </header>
+  <div class="body" id="one"></div>
+</section>
+
+<!-- Admin -->
+<section id="scrReels" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title">Reels</div>
+    <button id="btnRlOut" class="chip" hidden>Sign out</button>
+  </header>
+  <div class="body" id="rlBody"></div>
+</section>
+<section id="scrAdmin" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title">Admin</div>
+    <button id="btnAdmRefresh" class="chip">Refresh</button>
+  </header>
+  <div class="tabs" id="admTabs"><button data-t="queue" class="on">Bugs</button><button data-t="work">Work</button><button data-t="users">Users</button><button data-t="issues">Issues</button><button data-t="suggest">Suggestions</button><button data-t="reels">Reels</button><button data-t="notices">Notices</button><button data-t="ai">AI log</button><button data-t="audit">Audit</button></div>
+  <div class="body" id="adm"></div>
+</section>
+
+<!-- Admin: one bug -->
+<section id="scrReview" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title" id="revTitle">Bug</div>
+  </header>
+  <div class="body" id="rev"></div>
+</section>
+
+<!-- Settings -->
+<section id="scrSet" class="screen">
+  <header class="bar solid">
+    <button class="back" data-back aria-label="Back">&#8592;</button>
+    <div class="title">Settings</div>
+  </header>
+  <div class="body">
+    <h3>Appearance</h3>
+    <div class="theme-seg" id="themeSeg"><button data-th="auto">Phone setting</button><button data-th="light">Light</button><button data-th="dark">Dark</button></div>
+    <p class="muted small">Dark also darkens the map, except Satellite.</p>
+    <h3>Account</h3>
+    <p class="small" id="acct"></p>
+    <button id="btnProfile" class="cta static ghost">My profile</button>
+    <button id="btnSignOut" class="cta static ghost">Sign out</button>
+    <div id="adminBox" hidden>
+      <h3>Photo backup (admin)</h3>
+      <p class="muted small" id="bkStat">Checking...</p>
+      <button id="btnBackup" class="cta static">Back up photos to this phone</button>
+      <button id="btnFree" class="cta static ghost">Free server space</button>
+      <p class="muted small">Backup saves full photos to Pictures/TN Bug Sheet. Free server space deletes full photos backed up more than 30 days ago. Small thumbnails stay online.</p>
+    </div>
+    <h3>Help</h3>
+    <button id="btnIssue" class="cta static ghost">Report a problem with the app or wrong info</button>
+    <h3>About</h3>
+    <p class="muted small">Reports go straight to the TN Bug Sheet team. If there is no signal, they wait on this phone and send by themselves later. Build <span id="ver"></span>.</p>
+    <button id="btnSaveSet" class="cta static">Done</button>
+  </div>
+</section>
+
+<!-- First run consent -->
+<div id="consent" class="sheet">
+  <div class="card">
+    <h2>Before you start</h2>
+    <ul>
+      <li>Report only public problems: roads, lights, drains, garbage, water, power.</li>
+      <li>Your location is attached to each report. It is used to find the right office.</li>
+      <li>Keep faces and number plates out of photos.</li>
+      <li>Do not report while driving. Stop first.</li>
+      <li>Photos may be checked by an AI tool to sort the bug type.</li>
+    </ul>
+    <button id="btnAgree" class="cta static">I understand</button>
+  </div>
+</div>
+
+<div id="modal" class="sheet"><div class="card"><h2 id="mTitle"></h2><div id="mBody"></div>
+  <div class="row"><button id="mCancel" class="cta static ghost">Cancel</button><button id="mOk" class="cta static">Save</button></div></div></div>
+
+<div id="toast" class="toast"></div>
+
+<script src="lib/leaflet/leaflet.js"></script>
+<script src="lib/supabase.js"></script>
+<script src="config.js?v=0.50"></script>
+<script src="app.js?v=0.50"></script>
+<script src="admin.js?v=0.50"></script>
+<script src="directory.js?v=0.50"></script>
+<script src="mappulse.js?v=0.50"></script>
+<script src="maplook.js?v=0.50"></script>
+<script src="playbook.js?v=0.50"></script>
+<script src="reach.js?v=0.50"></script>
+<script src="verify.js?v=0.50"></script>
+<script src="work.js?v=0.50"></script>
+<script src="issues.js?v=0.50"></script>
+<script src="wiki.js?v=0.50"></script>
+<script src="orgchart.js?v=0.50"></script>
+<script src="atlas.js?v=0.50"></script>
+<script src="suggest.js?v=0.50"></script>
+<script src="home.js?v=0.50"></script>
+<script src="councillors.js?v=0.50"></script>
+<script src="steps.js?v=0.50"></script>
+<script src="easyreport.js?v=0.50"></script>
+<script src="privacy.js?v=0.50"></script>
+<script src="profile.js?v=0.50"></script>
+<script src="questions.js?v=0.50"></script>
+<script src="library.js?v=0.50"></script>
+<script src="notices.js?v=0.50"></script>
+<script src="reels.js?v=0.50"></script>
+</body>
+</html>
